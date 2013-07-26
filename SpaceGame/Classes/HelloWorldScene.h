@@ -15,6 +15,11 @@
 #include "cocos2d.h"
 #include "CCParallaxNodeExtras.h"
 
+typedef enum {
+  KENDREASONWIN,
+  KENDREASONLOSE
+} EndReason;
+
 class HelloWorld : public cocos2d::CCLayer
 {
 public:
@@ -27,25 +32,65 @@ public:
     // a selector callback
     void menuCloseCallback(CCObject* pSender);
 
+	//Override method update
 	//scheduled update
 	void update (float pdt);
+
+	//add asteroid
+	//random value
+	float randomValueBetween(float plow, float phigh);
+	
+	void setInvisible(CCNode* pnode);
+	
+	float getTimeTick();
+	//action when touch_move on screen
+	virtual void ccTouchesBegan(cocos2d::CCSet* Touches, cocos2d::CCEvent* pEvent);
+
+	//action when touch_move on screen
+	virtual void ccTouchesEnded(cocos2d::CCSet* Touches, cocos2d::CCEvent* pEvent);
     
     // implement the "static node()" method manually
     CREATE_FUNC(HelloWorld);
 private:
 	//layout containt ship
-	cocos2d::CCSpriteBatchNode* mbatchNode;
+	cocos2d::CCSpriteBatchNode* mBatchNode;
 	//element ship
-	cocos2d::CCSprite* mship;
+	cocos2d::CCSprite* mShip;
 	//layout containt background
-	CCParallaxNodeExtras* mbackgroundNode;
+	CCParallaxNodeExtras* mBackgroundNode;
 	//element into background layout
-	cocos2d::CCSprite* mspacedust1;
-	cocos2d::CCSprite* mspacedust2;
-	cocos2d::CCSprite* mplanetsunrise;
-	cocos2d::CCSprite* mgalaxy;
-	cocos2d::CCSprite* mspacialanomaly;
-	cocos2d::CCSprite* mspacialanomaly2;
+	cocos2d::CCSprite* mSpacedust1;
+	cocos2d::CCSprite* mSpacedust2;
+	cocos2d::CCSprite* mPlanetsunrise;
+	cocos2d::CCSprite* mGalaxy;
+	cocos2d::CCSprite* mSpacialanomaly;
+	cocos2d::CCSprite* mSpacialanomaly2;
+	float mShipPointPerSecY;
+
+	//store asteroids
+	CCArray* mAsteroids;
+	int mNextAsteroid;
+	float mNextAsteroidSpawn;
+
+	//value store shoot
+	CCArray* mShipLasers;
+	int mNextShipLaser;
+
+	//value store location touch
+	CCPoint location;
+
+	//collision detection
+	int nLives;
+
+	//over game
+	double nGameOverTime;
+	bool isGameOver;
+
+	//over game
+	void mEndScene(EndReason pEndReason);
+	//restart game
+	void restartTapped();
+
 };
 
 #endif // __HELLOWORLD_SCENE_H__

@@ -15,7 +15,8 @@ using namespace cocos2d;
 
 // Hack to access CCPointObject (which is not a public class)
 //create private class CCPointObject extends class CCObject
-class CCPointObject  : CCObject {
+class CCPointObject  : CCObject
+{
 	/*
 	*That like
 	*#define CC_SYNTHESIZE(varType, varName, funName)\
@@ -47,10 +48,10 @@ CCParallaxNodeExtras* CCParallaxNodeExtras::node()
 */
 void CCParallaxNodeExtras::incrementOffset(CCPoint poffset,CCNode* pnode){
     for( unsigned int i = 0; i < m_pParallaxArray->num; i++) {
-        CCPointObject* mpoint = (CCPointObject* ) m_pParallaxArray->arr[i];
-        CCNode* mcurNode = mpoint->getChild();
-        if( mcurNode->isEqual(pnode) ) {
-            mpoint->setOffset( ccpAdd(mpoint->getOffset(), poffset) );
+        CCPointObject* point = (CCPointObject* ) m_pParallaxArray->arr[i];
+        CCNode* curNode = point->getChild();
+        if( curNode->isEqual(pnode) ) {
+            point->setOffset( ccpAdd(point->getOffset(), poffset) );
             break;
         }
     }

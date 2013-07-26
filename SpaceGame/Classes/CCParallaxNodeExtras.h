@@ -16,8 +16,8 @@
  
 USING_NS_CC;
  
-class CCParallaxNodeExtras : public CCParallaxNode {
- 
+class CCParallaxNodeExtras : public CCParallaxNode
+{ 
     public :
  
     // Need to provide a constructor 
