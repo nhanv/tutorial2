@@ -84,12 +84,14 @@ private:
 
 	//over game
 	double nGameOverTime;
+	int nAsteroid;
 	bool isGameOver;
 
 	//over game
 	void mEndScene(EndReason pEndReason);
 	//restart game
-	void restartTapped();
+	//fix: add parameters
+	void restartTapped(CCObject* pSender);
 
 };
 

@@ -15,10 +15,12 @@
 
 #include "HelloWorldScene.h"
 #include "CCParallaxNodeExtras.h"
+#include "SimpleAudioEngine.h"
 
 USING_NS_CC;
 
 using namespace cocos2d;
+using namespace CocosDenshion;
 
 CCScene* HelloWorld::scene()
 {
@@ -69,6 +71,11 @@ bool HelloWorld::init()
 
 	//get winSize
 	CCSize winSize = CCDirector::sharedDirector()->getWinSize();
+
+	//play sound
+	SimpleAudioEngine::sharedEngine()->playBackgroundMusic("SpaceGame.wav",true);
+	SimpleAudioEngine::sharedEngine()->preloadEffect("explosion_large.wav");
+	SimpleAudioEngine::sharedEngine()->preloadEffect("laser_ship.wav");
 
 	///////////////////////////////////////////////////////////////////////////////////////
 	//3.add background: create object CCParallaxNode containt other element
@@ -155,6 +162,8 @@ bool HelloWorld::init()
 	//over game
 	//set default nLives and nGameOverTime
 	nLives = 3;
+	nAsteroid = 0;
+	isGameOver = false;
 	double curTime = getTimeTick();
 	nGameOverTime = curTime + 30000;
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -260,8 +269,12 @@ void HelloWorld::update (float pdt)
 			//neu xay ra va cham thi xoa ca laser va asteroid (setVisible = false)
 			if ( ( (CCSprite* ) shipLaser)->boundingBox().intersectsRect( ( (CCSprite* ) asteroid)->boundingBox() ) )
 			{
+				//play sound
+				SimpleAudioEngine::sharedEngine()->playEffect("explosion_large.wav");
+				//remove shipLaser and asteroid
 				((CCSprite* ) shipLaser)->setVisible(false);
 				((CCSprite* ) asteroid)->setVisible(false);
+				nAsteroid ++;
 				continue;
 			}
 		}
@@ -269,16 +282,19 @@ void HelloWorld::update (float pdt)
 		//truong hop xet va cham giua hanh tinh va tau
 		//thi an tau di roi hien lai (hieu ung nhay nhay) va giam tg song cua tau di (lives--)
 		//khi nao het mLives thi nguoi choi thua
-		if (mShip->boundingBox().intersectsRect(((CCSprite* ) asteroid)->boundingBox()) )
+		if (mShip->isVisible())
 		{
-			((CCSprite *)asteroid)->setVisible(false);
-			/*
-			void Player::blink() {
-			CCBlink blink = CCBlink::actionWithDuration(1.0, 9);
-			runAction(blink);
-			}*/
-			mShip->runAction( CCBlink::create(1.0, 9));
-			nLives --;
+			if (mShip->boundingBox().intersectsRect(((CCSprite* ) asteroid)->boundingBox()) )
+			{
+				((CCSprite *)asteroid)->setVisible(false);
+				/*
+				void Player::blink() {
+				CCBlink blink = CCBlink::actionWithDuration(1.0, 9);
+				runAction(blink);
+				}*/
+				mShip->runAction( CCBlink::create(1.0, 9));
+				nLives --;
+			}
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,8 +304,12 @@ void HelloWorld::update (float pdt)
 		mShip->stopAllActions();
 		mShip->setVisible(false);
 		this->mEndScene(KENDREASONLOSE);
+
 	}
 	else if (curTimeMillis >= nGameOverTime)
+	{
+		this->mEndScene(KENDREASONWIN);
+	}else if (nAsteroid >= 10)
 	{
 		this->mEndScene(KENDREASONWIN);
 	}
@@ -300,8 +320,14 @@ void HelloWorld::update (float pdt)
 */
 void HelloWorld::ccTouchesBegan(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEvent)
 {
-	CCTouch* touch = (CCTouch*) (pTouches->anyObject());
-	location = touch->getLocationInView();
+	if(mShip->isVisible())
+	{
+		//play sound
+		SimpleAudioEngine::sharedEngine()->playEffect("laser_ship.wav");
+		//set location
+		CCTouch* touch = (CCTouch*) (pTouches->anyObject());
+		location = touch->getLocationInView();
+		}
 }
 
 /**
@@ -309,31 +335,37 @@ void HelloWorld::ccTouchesBegan(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEve
 */
 void HelloWorld::ccTouchesEnded(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEvent)
 {
-	//get winSize
-	CCSize winSize = CCDirector::sharedDirector()->getWinSize();
-	//get location touch on screen
-	float touchY = location.y;
+	if(mShip->isVisible())
+	{
+		//get winSize
+		CCSize winSize = CCDirector::sharedDirector()->getWinSize();
+		//get location touch on screen
+		float touchY = location.y;
 
-	CCPoint locationT = ccp(30.0, winSize.height - touchY);
+		CCPoint locationT = ccp(30.0, winSize.height - touchY);
 
-	mShip->setPosition(locationT);
-	//CCLog();
+		mShip->setPosition(locationT);
 
     
-    CCSprite *shipLaser = (CCSprite* ) mShipLasers->objectAtIndex(mNextShipLaser++);
+		CCSprite *shipLaser = (CCSprite* ) mShipLasers->objectAtIndex(mNextShipLaser++);
     
-	if ( mNextShipLaser >= mShipLasers->count() )
-		mNextShipLaser = 0;
+		if ( mNextShipLaser >= mShipLasers->count() )
+			mNextShipLaser = 0;
 
-    shipLaser->setPosition( ccpAdd( mShip->getPosition(), ccp(shipLaser->getContentSize().width/2, 0)));
-    shipLaser->setVisible(true);
-    shipLaser->stopAllActions();
-    shipLaser->runAction(CCSequence::create(CCMoveBy::create(0.5,ccp(winSize.width, 0)),
+		shipLaser->setPosition( ccpAdd( mShip->getPosition(), ccp(shipLaser->getContentSize().width/2, 0)));
+		shipLaser->setVisible(true);
+		shipLaser->stopAllActions();
+		shipLaser->runAction(CCSequence::create(CCMoveBy::create(0.5,ccp(winSize.width, 0)),
 																	CCCallFuncN::create(this,
 																	callfuncN_selector(HelloWorld::setInvisible)), NULL
-    ));
+		));
+	}
 }
 
+
+/**
+*game over
+*/
 void HelloWorld::mEndScene( EndReason pEndReason )
 {
 	//check over game
@@ -354,26 +386,27 @@ void HelloWorld::mEndScene( EndReason pEndReason )
     label->setScale(0.1f);
     label->setPosition(ccp(winSize.width/2 , winSize.height*0.6));
     this->addChild(label);
- 
+
+	//menu
     CCLabelBMFont* restartLabel;
     strcpy(message,"Restart");
     restartLabel = CCLabelBMFont::create(message, "Arial.fnt");
-	
+
 	//describe menuItem
-    CCMenuItemLabel* restartItem = CCMenuItemLabel::create(restartLabel, this, menu_selector(HelloWorld::restartTapped));
-    restartItem->setScale(0.1f);
+	CCMenuItemLabel* restartItem = CCMenuItemLabel::create(restartLabel, this, menu_selector(HelloWorld::restartTapped) );
     restartItem->setPosition( ccp(winSize.width/2, winSize.height*0.4));
-	
+
 	//describe menu
     CCMenu* menu = CCMenu::create (restartItem, NULL);
     menu->setPosition (CCPointZero);
     this->addChild(menu);
  
     // clear label and menu
-    restartItem->runAction (CCScaleTo::create(0.5, 1.0));
+    //restartItem->runAction (CCScaleTo::create(0.5, 1.0));
     label ->runAction (CCScaleTo::create(0.5, 1.0));
     // Terminate update callback
     this->unscheduleUpdate();
+	
 }
 
 /**
@@ -405,8 +438,11 @@ void HelloWorld::setInvisible(CCNode* pnode)
 
 /**
 *restartGame
+*Khi mEndScene goi toi restartTapped se bi loi ep kieu sang ELS_Handler
+*la do ham restartTapped ko tham so
+*Cach fix: Them tham so CCObject* pSender vao
 */
-void HelloWorld::restartTapped()
+void HelloWorld::restartTapped(CCObject* pSender)
 {
     CCDirector::sharedDirector()->replaceScene (CCTransitionZoomFlipX::create(0.5, this->scene()));
     // reschedule: callback game;
